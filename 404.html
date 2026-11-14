@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/vaalai/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="Vaalai — Professional Banana Merchant ERP & Trading System">
+  <meta name="theme-color" content="#065F46">
+
+  <!-- iOS PWA meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vaalai">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Vaalai • Banana Merchant ERP</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #065F46;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #vaalai-loader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, #064E3B 0%, #065F46 55%, #047857 100%);
+      color: #FFFFFF;
+      z-index: 9999;
+      transition: opacity 0.35s ease;
+    }
+
+    #vaalai-loader img {
+      width: 88px;
+      height: 88px;
+      border-radius: 22px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      margin-bottom: 18px;
+      background: #ffffff;
+      padding: 6px;
+    }
+
+    #vaalai-loader h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+    }
+
+    #vaalai-loader p {
+      margin: 6px 0 24px;
+      font-size: 13px;
+      color: #A7F3D0;
+      font-weight: 500;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(255, 255, 255, 0.25);
+      border-top-color: #34D399;
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* iOS Safari Add-to-Home-Screen Prompt */
+    #ios-pwa-banner {
+      display: none;
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 16px;
+      background: #0F172A;
+      color: #F8FAFC;
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+      z-index: 10000;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    #ios-pwa-banner img {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      background: #fff;
+    }
+
+    #ios-pwa-banner .banner-text {
+      flex: 1;
+    }
+
+    #ios-pwa-banner .banner-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #34D399;
+      margin-bottom: 2px;
+    }
+
+    #ios-pwa-banner button {
+      background: rgba(255, 255, 255, 0.12);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="vaalai-loader">
+    <img src="icons/Icon-192.png" alt="Vaalai Logo" />
+    <h1>Vaalai</h1>
+    <p>Banana Merchant ERP &amp; Trading System</p>
+    <div class="spinner"></div>
+  </div>
+
+  <div id="ios-pwa-banner">
+    <img src="icons/Icon-192.png" alt="Vaalai" />
+    <div class="banner-text">
+      <div class="banner-title">Install Vaalai on iPhone / iPad</div>
+      Tap <strong>Share [↑]</strong> below, then select <strong>"Add to Home Screen"</strong> for the full-screen app experience.
+    </div>
+    <button id="ios-pwa-dismiss" type="button">Got it</button>
+  </div>
+
+  <script>
+    // Request persistent browser storage so iOS/Safari retains local ERP data
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(function() {});
+    }
+
+    // Remove splash loader once Flutter renders first frame
+    window.addEventListener('flutter-first-frame', function () {
+      var loader = document.getElementById('vaalai-loader');
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(function () { loader.remove(); }, 350);
+      }
+
+      // Show iOS Add to Home Screen guide if on iOS Safari and not yet in standalone mode
+      var isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+      var isInStandalone = ('standalone' in window.navigator && window.navigator.standalone) ||
+                           window.matchMedia('(display-mode: standalone)').matches;
+      var dismissed = false;
+      try {
+        dismissed = localStorage.getItem('vaalai_ios_pwa_banner_dismissed') === '1';
+      } catch (_) {}
+
+      if (isIos && !isInStandalone && !dismissed) {
+        var banner = document.getElementById('ios-pwa-banner');
+        if (banner) {
+          banner.style.display = 'flex';
+          var btn = document.getElementById('ios-pwa-dismiss');
+          if (btn) {
+            btn.addEventListener('click', function () {
+              banner.style.display = 'none';
+              try {
+                localStorage.setItem('vaalai_ios_pwa_banner_dismissed', '1');
+              } catch (_) {}
+            });
+          }
+        }
+      }
+    });
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
